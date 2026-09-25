@@ -44,5 +44,31 @@ g++ main.cpp parshukova.cpp -o app
 
 ".gitignore" — исключения для Git
 
+Курсовой проект: Умная кухня
 
+
+
+Лабораторная работа №2. Композиция и агрегация
+
+Структура проекта
+
+\- main.cpp` — демонстрационная программа
+
+\- src/product.hpp / src/product.cpp — класс Продукт
+
+\- src/fridge.hpp / src/fridge.cpp — класс Холодильник
+
+\- src/recipe.hpp / src/recipe.cpp — класс Рецепт
+
+Связи между классами
+
+\- Композиция: Холодильник содержит Продукты (по значению)
+
+\- Агрегация: Рецепт использует Продукты (по указателю)
+
+&#x20;Компиляция и запуск
+
+g++ main.cpp src/product.cpp src/fridge.cpp src/recipe.cpp -o app
+
+./app
 

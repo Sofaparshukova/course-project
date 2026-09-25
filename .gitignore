@@ -1,0 +1,39 @@
+# === C/C++ компиляция ===
+*.exe
+*.obj
+*.o
+*.out
+*.app
+*.pdb
+*.ilk
+*.idb
+
+# === C# компиляция ===
+*.dll
+*.pdb
+*.mdb
+*.cache
+*.trg
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# === Visual Studio ===
+.vs/
+Debug/
+Release/
+x64/
+x86/
+bin/
+obj/
+build/
+
+# === Системные файлы ===
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# === Прочее ===
+*.log
+*.tmp
