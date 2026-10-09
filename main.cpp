@@ -66,7 +66,7 @@ int main() {
         std::cout << "Продуктов в холодильнике: " << fridge.GetCount() << "\n";
 
         // 8. АГРЕГАЦИЯ 
-        std::cout << "\n--- 8. Агрегация ---\n";
+        std::cout << " Агрегация \n";
         Recipe omelet("Омлет", 10);
         omelet.AddIngredient(egg);
         omelet.AddIngredient(milk);
