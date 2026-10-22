@@ -29,15 +29,14 @@ int main() {
     Product* ptr = &staticProduct;
     std::cout << "Через указатель: " << ptr->GetName() << "\n";
 
-    // 4. ДИНАМИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ (shared_ptr вместо new)
+    // 4. ДИНАМИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ 
     std::cout << "\n Динамическая инициализация\n";
     auto egg  = std::make_shared<Product>("Яйцо", 10, 7);
     auto milk = std::make_shared<Product>("Молоко", 2.0, 5);
 
-    // 5. ДИНАМИЧЕСКИЙ МАССИВ ОБЪЕКТОВ (unique_ptr)
+    // 5. ДИНАМИЧЕСКИЙ МАССИВ ОБЪЕКТОВ 
     std::cout << "\n массив объектов (unique_ptr) \n";
     {
-        // Используем unique_ptr для массива указателей на объекты
         auto productArray = std::make_unique<std::unique_ptr<Product>[]>(3);
         productArray[0] = std::make_unique<Product>("Сыр", 0.5, 10);
         productArray[1] = std::make_unique<Product>("Масло", 0.2, 7);
@@ -77,7 +76,7 @@ int main() {
         // 9. ПРОВЕРКА ПРАВИЛА 
         std::cout << "\n Проверка правила\n";
         if (omelet.CanCook()) {
-            std::cout << "Всё свежее — можно готовить!\n";
+            std::cout << "Всё свежее — можно готовить\n";
         }
 
         // 10. НАРУШЕНИЕ ПРАВИЛА
