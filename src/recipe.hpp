@@ -3,13 +3,14 @@
 #include "product.hpp"
 #include <vector>
 #include <string_view>
+#include <memory>
 
 namespace kitchen {
 
 class Recipe {
 private:
     std::string m_name;
-    std::vector<Product*> m_ingredients;
+    std::vector<std::weak_ptr<Product>> m_ingredients;
     int m_cookingTimeMinutes;
 
 public:
@@ -17,13 +18,11 @@ public:
     Recipe(std::string_view name, int cookingTimeMinutes);
     ~Recipe();
 
-    void AddIngredient(Product* product);
+    void AddIngredient(const std::shared_ptr<Product>& product);
     bool CanCook() const;
     void ShowIngredients() const;
 
-    [[nodiscard]] std::string_view GetName() const { return m_name; }
-    [[nodiscard]] int GetTime() const { return m_cookingTimeMinutes; }
-    [[nodiscard]] int GetIngredientCount() const { return static_cast<int>(m_ingredients.size()); }
+    std::string_view GetName() const { return m_name; }
 };
 
 } // namespace kitchen

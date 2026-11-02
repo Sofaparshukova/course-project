@@ -1,110 +1,66 @@
-#include "src/fridge.hpp"
-#include "src/product.hpp"
-#include "src/recipe.hpp"
+#include "src/base_product.hpp"
+#include "src/dairy_product.hpp"
+#include "src/meat_product.hpp"
 
 #include <iostream>
+#include <memory>
+#include <vector>
+#include <windows.h>
 
 using namespace kitchen;
 
 int main() {
-    std::cout << "Композиция и агрегация\n\n";
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
 
-    // 1. СТАТИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ 
+    std::cout << "ЛАБА 4. Часть 1\n\n";
 
-    std::cout << "Статическая инициализация\n";
-    Product staticProduct("Хлеб", 1.0, 5);
-    std::cout << "Создан: " << staticProduct.GetName() << "\n";
+    // 1. КОНСТРУКТОРЫ:
+    std::cout << "1. Создание объектов\n";
+    auto milk = std::make_unique<DairyProduct>("Молоко", 2.0, "3.2%");
+    auto beef = std::make_unique<MeatProduct>("Говядина", 1.5, "Россия");
 
+    // 2. МАССИВ УКАЗАТЕЛЕЙ 
+    std::cout << "\n2. Массив unique_ptr<BaseProduct>\n";
+    std::vector<std::unique_ptr<BaseProduct>> products;
+    products.push_back(std::make_unique<DairyProduct>("Сыр", 0.5, "45%"));
+    products.push_back(std::make_unique<MeatProduct>("Курица", 1.0, "Беларусь"));
+    products.push_back(std::make_unique<DairyProduct>("Кефир", 1.0, "1%"));
 
-    // 2. РАБОТА ПО ССЫЛКЕ
-    std::cout << "\n Работа по ссылке \n";
-    Product& ref = staticProduct;
-    std::cout << "Через ссылку: " << ref.GetName() << "\n";
-
-
-    // 3. РАБОТА ПО УКАЗАТЕЛЮ
-    std::cout << "\n3. Работа по указателю\n";
-    Product* ptr = &staticProduct;
-    std::cout << "Через указатель: " << ptr->GetName() << "\n";
-
-    // 4. ДИНАМИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ 
-
-    std::cout << "\n Динамическая инициализация\n";
-    Product* egg  = new Product("Яйцо", 10, 7);
-    Product* milk = new Product("Молоко", 2.0, 5);
-
-
-    // 5. ДИНАМИЧЕСКИЙ МАССИВ ОБЪЕКТОВ 
-    std::cout << "\n массив объектов \n";
-    Product* productArray = new Product[3] {
-        Product("Сыр", 0.5, 10),
-        Product("Масло", 0.2, 7),
-        Product("Кефир", 1.0, 3)
-    };
-    for (int i = 0; i < 3; ++i) {
-        std::cout << "  arr[" << i << "] = " << productArray[i].GetName() << "\n";
+    for (const auto& p : products) {
+        std::cout << "  " << p->Describe() << "\n";
     }
 
+    // 3. через конструктор копирования
+    std::cout << "\n3. Поверхностное копирование\n";
+    DairyProduct original("Йогурт", 1.0, "2.5%");
+    DairyProduct copy = original;  
+    std::cout << "  Оригинал: " << original.Describe() << "\n";
+    std::cout << "  Копия:    " << copy.Describe() << "\n";
 
-    // 6. МАССИВ ДИНАМИЧЕСКИХ ОБЪЕКТОВ
-    std::cout << "\n массив динамических объектов \n";
-    Product** ptrArray = new Product*[3];
-    ptrArray[0] = new Product("Мука", 2.0, 30);
-    ptrArray[1] = new Product("Сахар", 1.0, 60);
-    ptrArray[2] = new Product("Соль", 0.5, 365);
-    for (int i = 0; i < 3; ++i) {
-        std::cout << "  ptrArr[" << i << "] = " << ptrArray[i]->GetName() << "\n";
-    }
+    // 4. КОПИРОВАНИЕ ЧЕРЕЗ Clone()
+    std::cout << "\n4. Глубокое копирование через Clone()\n";
+    std::unique_ptr<BaseProduct> cloned = original.Clone();
+    std::cout << "  Клон: " << cloned->Describe() << "\n";
 
+    // 5. ПОЛИМОРФИЗМ
+    std::cout << "\n5. Полиморфизм\n";
+    BaseProduct* ptr1 = milk.get();
+    BaseProduct* ptr2 = beef.get();
+    std::cout << "  Через базовый указатель: " << ptr1->Describe() << "\n";
+    std::cout << "  Через базовый указатель: " << ptr2->Describe() << "\n";
 
-    // 7. КОМПОЗИЦИЯ 
-    std::cout << "\n Композиция\n";
+    // 6. ВИРТУАЛЬНЫЙ ДЕСТРУКТОР
+    std::cout << "\n6. Удаление через unique_ptr<BaseProduct>\n";
     {
-        Fridge fridge("Samsung");
-        fridge.AddProduct("Яйцо", 10, 7);
-        fridge.AddProduct("Молоко", 2.0, 5);
-        std::cout << "Продуктов в холодильнике: " << fridge.GetCount() << "\n";
-
-        // 8. АГРЕГАЦИЯ 
-        std::cout << " Агрегация \n";
-        Recipe omelet("Омлет", 10);
-        omelet.AddIngredient(egg);
-        omelet.AddIngredient(milk);
-        omelet.ShowIngredients();
-
-        // 9. ПРОВЕРКА ПРАВИЛА 
-        std::cout << "\n Проверка правила\n";
-        if (omelet.CanCook()) {
-            std::cout << "Всё свежее — можно готовить!\n";
-        }
-
-        // 10. НАРУШЕНИЕ ПРАВИЛА
-        std::cout << "\n Нарушение правила \n";
-        egg->Spoil();
-        if (!omelet.CanCook()) {
-            std::cout << "Приготовление отменено\n";
-        }
-
-        std::cout << "\nВыход из блока: холодильник уничтожается\n";
+        std::unique_ptr<BaseProduct> temp = std::make_unique<MeatProduct>("Свинина", 2.0, "Россия");
     }
+    std::cout << "(объект удалён - деструкторы вызваны в правильном порядке)\n";
 
-    // 11. АГРЕГАЦИЯ: продукты живы
-    std::cout << "\n Рецепт уничтожен, но продукты живы\n";
-    std::cout << "Яйцо всё ещё существует: " << egg->GetName() << "\n";
-    std::cout << "Молоко всё ещё существует: " << milk->GetName() << "\n";
+    // 7. СТАТИЧЕСКИЕ ЧЛЕНЫ
+    std::cout << "\n7. Статические члены\n";
+    std::cout << "  Всего создано продуктов: " << BaseProduct::GetTotalCount() << "\n";
 
-
-    // 12. ОЧИСТКА ПАМЯТИ
-    std::cout << "\n Очистка памяти \n";
-    delete egg;
-    delete milk;
-    delete[] productArray;
-
-    for (int i = 0; i < 3; ++i) {
-        delete ptrArray[i];
-    }
-    delete[] ptrArray;
-
-    std::cout << "\nПрограмма завершена\n";
+    std::cout << "\n Программа завершена\n";
     return 0;
 }
