@@ -1,6 +1,7 @@
 #include "base_product.hpp"
 #include <iostream>
 #include <utility>
+#include "product_exception.hpp"
 
 namespace kitchen {
 

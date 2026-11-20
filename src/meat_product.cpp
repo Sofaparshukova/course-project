@@ -18,6 +18,13 @@ MeatProduct::MeatProduct(const MeatProduct& other)
     std::cout << "MeatProduct(const&): " << GetName() << "\n";
 }
 
+MeatProduct::MeatProduct(MeatProduct&& other) noexcept
+    : BaseProduct{ std::move(other) }
+    , m_origin{ std::move(other.m_origin) }
+{
+    std::cout << "MeatProduct(&&): " << GetName() << "\n";
+}
+
 MeatProduct::~MeatProduct() {
     std::cout << "~MeatProduct(): " << GetName() << "\n";
 }

@@ -24,6 +24,8 @@ public:
     BaseProduct& operator=(BaseProduct&& other) noexcept;
     virtual ~BaseProduct();
 
+    std::string GetKind() const { return "продукт"; }
+
     virtual int GetShelfLifeDays() const = 0;
 
   
@@ -41,4 +43,4 @@ public:
     static int GetTotalCount() { return m_lastId; }
 };
 
-} // namespace kitchen
+} 
