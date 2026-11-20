@@ -4,8 +4,7 @@
 namespace kitchen {
 
 Recipe::Recipe(std::string_view name, int cookingTimeMinutes)
-    : m_name{ name }
-    , m_cookingTimeMinutes{ cookingTimeMinutes }
+    : m_name{ name }, m_cookingTimeMinutes{ cookingTimeMinutes }
 {
     if (cookingTimeMinutes <= 0) {
         std::cerr << "Ошибка: время приготовления должно быть положительным!\n";
@@ -16,11 +15,11 @@ Recipe::Recipe(std::string_view name, int cookingTimeMinutes)
 
 Recipe::~Recipe() {
     std::cout << "Рецепт уничтожен: " << m_name 
-              << " (продукты остались живы — агрегация)\n";
+              << " (продукты живы — агрегация)\n";
 }
 
-void Recipe::AddIngredient(Product* product) {
-    if (product == nullptr) {
+void Recipe::AddIngredient(const std::shared_ptr<Product>& product) {
+    if (!product) {
         std::cerr << "Ошибка: нельзя добавить пустой продукт!\n";
         return;
     }
@@ -30,10 +29,15 @@ void Recipe::AddIngredient(Product* product) {
 }
 
 bool Recipe::CanCook() const {
-    for (const auto* product : m_ingredients) {
-        if (!product->CheckFreshness()) {
-            std::cerr << "Нельзя приготовить: продукт испорчен — " 
-                      << product->GetName() << "\n";
+    for (const auto& weak : m_ingredients) {
+        if (auto product = weak.lock()) {
+            if (!product->CheckFreshness()) {
+                std::cerr << "Нельзя приготовить: продукт испорчен — " 
+                          << product->GetName() << "\n";
+                return false;
+            }
+        } else {
+            std::cerr << "Нельзя приготовить: продукт уже уничтожен\n";
             return false;
         }
     }
@@ -42,9 +46,13 @@ bool Recipe::CanCook() const {
 
 void Recipe::ShowIngredients() const {
     std::cout << "Ингредиенты рецепта " << m_name << ":\n";
-    for (const auto* product : m_ingredients) {
-        std::cout << "  - " << product->GetName() 
-                  << " (" << product->GetQuantity() << ")\n";
+    for (const auto& weak : m_ingredients) {
+        if (auto product = weak.lock()) {
+            std::cout << "  - " << product->GetName() 
+                      << " (" << product->GetQuantity() << ")\n";
+        } else {
+            std::cout << "  - (уничтожен)\n";
+        }
     }
 }
 

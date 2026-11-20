@@ -1,109 +1,108 @@
-#include "src/fridge.hpp"
-#include "src/product.hpp"
-#include "src/recipe.hpp"
+#include "src/base_product.hpp"
+#include "src/dairy_product.hpp"
+#include "src/meat_product.hpp"
+#include "src/kefir_product.hpp"
+#include "src/i_consumable.hpp"
+#include "src/standard_policy.hpp"
+#include "src/guest_policy.hpp"
+#include "src/product_exception.hpp"
 
 #include <iostream>
+#include <memory>
+#include <vector>
+#include <windows.h>
 
 using namespace kitchen;
+// Функция работает через интерфейс и не знает конкретных классов
+void IssueToUser(IConsumable& item, std::string_view user) {
+    if (item.IsAvailable()) {
+        item.Consume(user);
+    }
+}
+
+// Проверка типа во время выполнения
+void TryConsume(BaseProduct& item, std::string_view user) {
+    if (auto* c = dynamic_cast<IConsumable*>(&item)) {
+        try {
+            c->Consume(user);
+        } catch (const NoPortionsAvailable& e) {
+            std::cout << "  [исключение] " << e.what() << " — поставлен в очередь\n";
+        } catch (const std::exception& e) {
+            std::cout << "  [исключение] " << e.what() << "\n";
+        }
+    } else {
+        std::cout << "  " << item.GetName() << ": нельзя выдать (не IConsumable)\n";
+    }
+}
 
 int main() {
-    std::cout << "Композиция и агрегация\n\n";
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
 
-    // 1. СТАТИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ 
+    std::cout << "ЛАБА 5. Часть 1 — Полиморфизм\n\n";
 
-    std::cout << "Статическая инициализация\n";
-    Product staticProduct("Хлеб", 1.0, 5);
-    std::cout << "Создан: " << staticProduct.GetName() << "\n";
+    // 1. Раннее и позднее связывание
+    std::cout << "1. Раннее и позднее связывание\n";
+    auto milk = std::make_unique<DairyProduct>("Молоко", 2.0, "3.2%");
+    auto beef = std::make_unique<MeatProduct>("Говядина", 1.5, "Россия");
 
+    BaseProduct* p1 = milk.get();
+    BaseProduct* p2 = beef.get();
+    std::cout << "  ptr1->GetKind(): " << p1->GetKind() << "  (раннее)\n";
+    std::cout << "  ptr1->Describe(): " << p1->Describe() << "  (позднее)\n";
+    std::cout << "  ptr2->GetKind(): " << p2->GetKind() << "  (раннее)\n";
+    std::cout << "  ptr2->Describe(): " << p2->Describe() << "  (позднее)\n";
 
-    // 2. РАБОТА ПО ССЫЛКЕ
-    std::cout << "\n Работа по ссылке \n";
-    Product& ref = staticProduct;
-    std::cout << "Через ссылку: " << ref.GetName() << "\n";
-
-
-    // 3. РАБОТА ПО УКАЗАТЕЛЮ
-    std::cout << "\n3. Работа по указателю\n";
-    Product* ptr = &staticProduct;
-    std::cout << "Через указатель: " << ptr->GetName() << "\n";
-
-    // 4. ДИНАМИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ 
-
-    std::cout << "\n Динамическая инициализация\n";
-    Product* egg  = new Product("Яйцо", 10, 7);
-    Product* milk = new Product("Молоко", 2.0, 5);
-
-
-    // 5. ДИНАМИЧЕСКИЙ МАССИВ ОБЪЕКТОВ 
-    std::cout << "\n массив объектов \n";
-    Product* productArray = new Product[3] {
-        Product("Сыр", 0.5, 10),
-        Product("Масло", 0.2, 7),
-        Product("Кефир", 1.0, 3)
-    };
-    for (int i = 0; i < 3; ++i) {
-        std::cout << "  arr[" << i << "] = " << productArray[i].GetName() << "\n";
+    // 2. Работа через интерфейс
+    std::cout << "\n2. Работа через интерфейс IConsumable\n";
+    try {
+        IssueToUser(*milk, "повар");
+    } catch (const std::exception& e) {
+        std::cout << "  [исключение] " << e.what() << "\n";
     }
 
+    // 3. dynamic_cast: мясо не реализует IConsumable
+    std::cout << "\n3. dynamic_cast\n";
+    TryConsume(*milk, "повар");
+    TryConsume(*beef, "повар");
 
-    // 6. МАССИВ ДИНАМИЧЕСКИХ ОБЪЕКТОВ
-    std::cout << "\n массив динамических объектов \n";
-    Product** ptrArray = new Product*[3];
-    ptrArray[0] = new Product("Мука", 2.0, 30);
-    ptrArray[1] = new Product("Сахар", 1.0, 60);
-    ptrArray[2] = new Product("Соль", 0.5, 365);
-    for (int i = 0; i < 3; ++i) {
-        std::cout << "  ptrArr[" << i << "] = " << ptrArray[i]->GetName() << "\n";
+    // 4. Исключение: порций больше нет
+    std::cout << "\n4. Исключение NoPortionsAvailable\n";
+    TryConsume(*milk, "повар-2");
+
+    // 5. Конфигурирование: смена объекта поведения
+    std::cout << "\n5. Конфигурирование (динамическое)\n";
+    auto yogurt = std::make_unique<DairyProduct>("Йогурт", 1.0, "2.5%");
+    std::cout << "  Политика по умолчанию: " << yogurt->PolicyName() << "\n";
+
+    yogurt->SetPolicy(std::make_unique<GuestPolicy>());
+    std::cout << "  Новая политика: " << yogurt->PolicyName() << "\n";
+
+    TryConsume(*yogurt, "повар Иванов");   
+    TryConsume(*yogurt, "гость Петров");   
+
+    // 6. Исключение из конструктора: отрицательное количество
+    std::cout << "\n6. Исключение InvalidQuantity\n";
+    try {
+        DairyProduct bad("Бракованный", -1.0, "0%");
+    } catch (const InvalidQuantity& e) {
+        std::cout << "  [исключение] " << e.what() << "\n";
+    } catch (const std::exception& e) {
+        std::cout << "  [исключение] " << e.what() << "\n";
     }
 
+    // 7. Клонирование и второй класс с интерфейсом
+    std::cout << "\n7. Клонирование и KefirProduct\n";
+    auto kefir = std::make_unique<KefirProduct>("Кефир", 1.0);
+    TryConsume(*kefir, "повар");
 
-    // 7. КОМПОЗИЦИЯ 
-    std::cout << "\n Композиция\n";
-    {
-        Fridge fridge("Samsung");
-        fridge.AddProduct("Яйцо", 10, 7);
-        fridge.AddProduct("Молоко", 2.0, 5);
-        std::cout << "Продуктов в холодильнике: " << fridge.GetCount() << "\n";
-
-        // 8. АГРЕГАЦИЯ 
-        std::cout << " Агрегация \n";
-        Recipe omelet("Омлет", 10);
-        omelet.AddIngredient(egg);
-        omelet.AddIngredient(milk);
-        omelet.ShowIngredients();
-
-        // 9. ПРОВЕРКА ПРАВИЛА 
-        std::cout << "\n Проверка правила\n";
-        if (omelet.CanCook()) {
-            std::cout << "Всё свежее — можно готовить!\n";
-        }
-
-        // 10. НАРУШЕНИЕ ПРАВИЛА
-        std::cout << "\n Нарушение правила \n";
-        egg->Spoil();
-        if (!omelet.CanCook()) {
-            std::cout << "Приготовление отменено\n";
-        }
-
-        std::cout << "\nВыход из блока: холодильник уничтожается\n";
+    std::vector<std::unique_ptr<BaseProduct>> products;
+    products.push_back(milk->Clone());
+    products.push_back(beef->Clone());
+    products.push_back(kefir->Clone());
+    for (const auto& p : products) {
+        std::cout << "  " << p->Describe() << "\n";
     }
-
-    // 11. АГРЕГАЦИЯ: продукты живы
-    std::cout << "\n Рецепт уничтожен, но продукты живы\n";
-    std::cout << "Яйцо всё ещё существует: " << egg->GetName() << "\n";
-    std::cout << "Молоко всё ещё существует: " << milk->GetName() << "\n";
-
-
-    // 12. ОЧИСТКА ПАМЯТИ
-    std::cout << "\n Очистка памяти \n";
-    delete egg;
-    delete milk;
-    delete[] productArray;
-
-    for (int i = 0; i < 3; ++i) {
-        delete ptrArray[i];
-    }
-    delete[] ptrArray;
 
     std::cout << "\nПрограмма завершена\n";
     return 0;
