@@ -14,19 +14,17 @@ namespace Kitchen
             Console.WriteLine($"MeatProduct(): {Name}");
         }
 
+        public new string GetKind() => "мясной продукт";
+
         // Переопределение абстрактного свойства
         public override int ShelfLifeDays => 3;
 
         // Переопределение без вызова базового метода
         public override string Describe()
         {
-            return $"Мясо «{Name}» из {Origin}, срок хранения {ShelfLifeDays} дн.";
+           return $"Мясо «{Name}» из {Origin}, срок хранения {ShelfLifeDays} дн.";
         }
 
-        // Клонирование
-        public override BaseProduct Clone()
-        {
-            return (MeatProduct)MemberwiseClone();
-        }
+        public override BaseProduct Clone() => (MeatProduct)MemberwiseClone();
     }
 }
